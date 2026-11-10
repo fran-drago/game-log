@@ -1,0 +1,41 @@
+name: "Agent: Security"
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: agent-security-${{ github.event.pull_request.number || 'audit' }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
+  id-token: write
+
+jobs:
+  security:
+    if: >-
+      vars.AGENTS_ENABLED == 'true' &&
+      (github.event_name != 'pull_request' ||
+       (!github.event.pull_request.head.repo.fork &&
+        ((github.event.action == 'labeled' && github.event.label.name == 'security:required') ||
+         (github.event.action == 'synchronize' && contains(github.event.pull_request.labels.*.name, 'security:required')))))
+    uses: ./.github/workflows/_agent.yml
+    secrets: inherit
+    with:
+      role: security
+      model: ${{ vars.MODEL_SECURITY || 'claude-sonnet-5-5' }}
+      allowed_tools: "Bash(gh:*),Bash(git:*),Bash(npm audit:*),Bash(npm ci:*),Read,Glob,Grep"
+      disallowed_tools: "Edit,Write,Bash(git push:*),Bash(gh pr merge:*)"
+      setup_node: true
+      max_turns: 50
+      task: >-
+        ${{ github.event_name == 'pull_request'
+          && format('Modo A: review de seguridad de la PR #{0}.', github.event.pull_request.number)
+          || 'Modo B: auditoría semanal. Revisá además cualquier PR abierta con security:required sin security:approved ni security:blocked.' }}

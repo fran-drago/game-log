@@ -1,0 +1,37 @@
+name: "Agent: Product Manager"
+
+on:
+  issues:
+    types: [opened]
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: agent-pm
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
+  id-token: write
+
+jobs:
+  pm:
+    if: >-
+      vars.AGENTS_ENABLED == 'true' &&
+      (github.event_name != 'issues' ||
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association))
+    uses: ./.github/workflows/_agent.yml
+    secrets: inherit
+    with:
+      role: product-manager
+      model: ${{ vars.MODEL_PM || 'claude-sonnet-5-5' }}
+      allowed_tools: "Bash(gh:*),Read,Glob,Grep"
+      max_turns: 50
+      task: >-
+        ${{ github.event_name == 'issues'
+          && format('Hacé el triage del issue #{0} según tu rol.', github.event.issue.number)
+          || 'Corrida de planificación: (1) triage de todos los issues en status:triage, (2) reponé la cola desde docs/ROADMAP.md si hace falta, (3) revisá issues estancados.' }}

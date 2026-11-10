@@ -1,0 +1,19 @@
+name: Feature
+description: Proponer una funcionalidad nueva
+labels: ["status:triage", "type:feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema / oportunidad
+      description: ¿Qué necesita el usuario y por qué?
+    validations: { required: true }
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Propuesta
+      description: Idea de solución (el PM la refinará con criterios de aceptación).
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notas / referencias

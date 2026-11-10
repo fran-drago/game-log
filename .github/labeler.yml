@@ -1,0 +1,29 @@
+# Labels automáticos de PR según paths (actions/labeler).
+"security:required":
+  - changed-files:
+      - any-glob-to-any-file:
+          - "supabase/**"
+          - "src/lib/supabase/**"
+          - "src/lib/env.ts"
+          - "src/**/auth/**"
+          - "src/**/actions/**"
+          - "src/**/actions.ts"
+          - "src/app/api/**"
+          - "src/middleware.ts"
+          - "src/proxy.ts"
+          - "next.config.ts"
+          - "package.json"
+          - "package-lock.json"
+          - ".github/**"
+"area:db":
+  - changed-files:
+      - any-glob-to-any-file: ["supabase/**"]
+"area:infra":
+  - changed-files:
+      - any-glob-to-any-file: [".github/**", "next.config.ts", "package.json"]
+"area:design":
+  - changed-files:
+      - any-glob-to-any-file: ["docs/design/**"]
+"area:frontend":
+  - changed-files:
+      - any-glob-to-any-file: ["src/app/**/*.tsx", "src/components/**"]

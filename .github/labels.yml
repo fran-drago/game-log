@@ -1,0 +1,121 @@
+# Fuente de verdad de los labels. Se sincroniza con labels.yml (workflow).
+# Estado (exactamente uno por issue)
+- {
+    name: "status:triage",
+    color: "ededed",
+    description: "Nuevo, lo refina el PM",
+  }
+- {
+    name: "status:needs-ux",
+    color: "d4c5f9",
+    description: "Necesita spec de UI (UX Designer)",
+  }
+- {
+    name: "status:needs-spec",
+    color: "c5def5",
+    description: "Necesita spec técnica (Architect)",
+  }
+- {
+    name: "status:ready",
+    color: "0e8a16",
+    description: "Listo para implementar (Developer)",
+  }
+- {
+    name: "status:in-progress",
+    color: "fbca04",
+    description: "Un Developer lo está implementando",
+  }
+- {
+    name: "status:in-review",
+    color: "1d76db",
+    description: "PR abierta, en revisión",
+  }
+- {
+    name: "status:blocked",
+    color: "b60205",
+    description: "Bloqueado por otro issue",
+  }
+# Control humano
+- {
+    name: "needs-human",
+    color: "e99695",
+    description: "Escalado al Product Owner; los agentes no lo tocan",
+  }
+- {
+    name: "hold",
+    color: "000000",
+    description: "Veto del Product Owner; no se trabaja ni se mergea",
+  }
+# Tipo
+- { name: "type:feature", color: "a2eeef", description: "Funcionalidad nueva" }
+- { name: "type:bug", color: "d73a4a", description: "Algo no funciona" }
+- {
+    name: "type:chore",
+    color: "cfd3d7",
+    description: "Mantenimiento / deuda técnica",
+  }
+- { name: "type:docs", color: "0075ca", description: "Documentación" }
+- { name: "type:security", color: "5319e7", description: "Seguridad" }
+# Área
+- {
+    name: "area:frontend",
+    color: "bfdadc",
+    description: "UI / componentes / rutas",
+  }
+- {
+    name: "area:backend",
+    color: "bfdadc",
+    description: "Server actions / APIs / integraciones",
+  }
+- {
+    name: "area:db",
+    color: "bfdadc",
+    description: "Esquema / migraciones / RLS",
+  }
+- {
+    name: "area:infra",
+    color: "bfdadc",
+    description: "CI/CD / tooling / deploy",
+  }
+- {
+    name: "area:design",
+    color: "bfdadc",
+    description: "Design system / specs de UI",
+  }
+# Prioridad
+- { name: "P0", color: "b60205", description: "Urgente: roto o bloqueante" }
+- { name: "P1", color: "d93f0b", description: "Milestone actual" }
+- { name: "P2", color: "fbca04", description: "Próximo" }
+- { name: "P3", color: "c2e0c6", description: "Algún día" }
+# PRs
+- { name: "agent-pr", color: "7057ff", description: "PR creada por un agente" }
+- {
+    name: "review:approved",
+    color: "0e8a16",
+    description: "Aprobada por el Reviewer",
+  }
+- {
+    name: "review:changes-requested",
+    color: "d93f0b",
+    description: "El Reviewer pidió cambios",
+  }
+- {
+    name: "security:required",
+    color: "5319e7",
+    description: "Toca paths sensibles: requiere review de Security",
+  }
+- {
+    name: "security:approved",
+    color: "0e8a16",
+    description: "Aprobada por Security",
+  }
+- {
+    name: "security:blocked",
+    color: "b60205",
+    description: "Hallazgo de seguridad bloqueante",
+  }
+- {
+    name: "dependencies",
+    color: "0366d6",
+    description: "Actualización de dependencias",
+  }

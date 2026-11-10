@@ -1,0 +1,35 @@
+name: "Claude (@claude)"
+
+# Permite al Product Owner hablar con el equipo mencionando @claude en issues y PRs.
+# La action verifica que quien menciona tenga permisos de escritura en el repo.
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
+  id-token: write
+
+jobs:
+  claude:
+    if: contains(github.event.comment.body, '@claude')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.AGENT_GH_TOKEN || github.token }}
+          claude_args: >-
+            --model ${{ vars.MODEL_ARCHITECT || 'claude-opus-5-5' }}
+            --max-turns 40
+            --append-system-prompt "Sos parte del equipo de GameLog. Seguí CLAUDE.md y docs/WORKFLOW.md. Si te piden trabajo que corresponde a un rol, actuá con ese rol (.claude/agents/) y respetá el proceso de labels."

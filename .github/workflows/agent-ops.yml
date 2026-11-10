@@ -1,0 +1,38 @@
+name: "Agent: Ops"
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  schedule:
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: agent-ops
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
+  id-token: write
+
+jobs:
+  ops:
+    if: >-
+      vars.AGENTS_ENABLED == 'true' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'failure')
+    uses: ./.github/workflows/_agent.yml
+    secrets: inherit
+    with:
+      role: ops
+      model: ${{ vars.MODEL_OPS || 'claude-sonnet-5-5' }}
+      allowed_tools: "Bash(gh:*),Bash(git:*),Read,Glob,Grep"
+      disallowed_tools: "Edit,Write,Bash(git push:*),Bash(gh pr merge:*)"
+      task: >-
+        ${{ github.event_name == 'workflow_run'
+          && format('Modo A: la corrida {0} de CI falló en main (commit {1}). Diagnosticala.', github.event.workflow_run.id, github.event.workflow_run.head_sha)
+          || 'Modo B: mantenimiento semanal y reporte.' }}

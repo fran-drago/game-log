@@ -1,0 +1,37 @@
+name: "Agent: Architect"
+
+on:
+  issues:
+    types: [labeled]
+  schedule:
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: agent-architect
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
+  id-token: write
+
+jobs:
+  architect:
+    if: >-
+      vars.AGENTS_ENABLED == 'true' &&
+      (github.event_name != 'issues' || github.event.label.name == 'status:needs-spec')
+    uses: ./.github/workflows/_agent.yml
+    secrets: inherit
+    with:
+      role: architect
+      model: ${{ vars.MODEL_ARCHITECT || 'claude-opus-5-5' }}
+      allowed_tools: "Bash(gh:*),Bash(git:*),Bash(npm:*),Bash(npx:*),Read,Write,Edit,Glob,Grep"
+      setup_node: true
+      max_turns: 60
+      task: >-
+        ${{ github.event_name == 'issues'
+          && format('Escribí la spec técnica del issue #{0} y movelo a status:ready (o dividilo / bloquealo).', github.event.issue.number)
+          || 'Procesá los issues en status:needs-spec (máx. 3), priorizando P0 y P1.' }}

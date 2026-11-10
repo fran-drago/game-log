@@ -1,0 +1,43 @@
+name: "Agent: Developer"
+
+on:
+  issues:
+    types: [labeled]
+  pull_request:
+    types: [labeled]
+  schedule:
+    - cron: "15 */3 * * *"
+  workflow_dispatch:
+
+# Un solo Developer a la vez: evita PRs en conflicto.
+concurrency:
+  group: agent-developer
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
+  id-token: write
+
+jobs:
+  developer:
+    if: >-
+      vars.AGENTS_ENABLED == 'true' &&
+      ((github.event_name == 'issues' && github.event.label.name == 'status:ready') ||
+       (github.event_name == 'pull_request' && github.event.label.name == 'review:changes-requested' &&
+        !github.event.pull_request.head.repo.fork) ||
+       github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    uses: ./.github/workflows/_agent.yml
+    secrets: inherit
+    with:
+      role: developer
+      model: ${{ vars.MODEL_DEVELOPER || 'claude-opus-5-5' }}
+      allowed_tools: "Bash(gh:*),Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(node:*),Bash(ls:*),Bash(mkdir:*),Bash(mv:*),Bash(rm:*),Read,Write,Edit,Glob,Grep"
+      setup_node: true
+      max_turns: 100
+      task: >-
+        ${{ github.event_name == 'pull_request'
+          && format('Modo B: atendé el review de la PR #{0} (hacé `gh pr checkout {0}` primero).', github.event.pull_request.number)
+          || 'Seguí tu rol: primero Modo B para cualquier PR con review:changes-requested; si no hay y el límite de WIP lo permite, Modo A con el issue status:ready de mayor prioridad. Un solo issue por corrida.' }}

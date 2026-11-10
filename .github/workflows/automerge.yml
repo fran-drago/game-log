@@ -1,0 +1,63 @@
+name: Automerge
+
+# Merge determinístico: ningún LLM decide el merge. Ver docs/WORKFLOW.md → "Gates de merge".
+on:
+  workflow_run:
+    workflows: [CI, CodeQL]
+    types: [completed]
+  pull_request:
+    types: [labeled, unlabeled, ready_for_review]
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: automerge
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    if: vars.AGENTS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ secrets.AGENT_GH_TOKEN || github.token }}
+      GH_REPO: ${{ github.repository }}
+      OWNER: ${{ github.repository_owner }}
+      REQUIRED_CHECKS: "verify secret-scan codeql"
+    steps:
+      - name: Evaluate and merge eligible PRs
+        run: |
+          set -euo pipefail
+          for n in $(gh pr list --state open --limit 50 --json number --jq '.[].number'); do
+            pr=$(gh pr view "$n" --json number,isDraft,isCrossRepository,mergeable,labels,author,statusCheckRollup)
+            labels=$(jq -c '[.labels[].name]' <<<"$pr")
+            has() { jq -e --arg l "$1" 'index($l) != null' <<<"$labels" >/dev/null; }
+            author=$(jq -r '.author.login' <<<"$pr")
+            reason=""
+
+            if [[ "$author" != "$OWNER" && "$author" != "app/dependabot" ]]; then reason="autor no confiable ($author)"
+            elif [[ $(jq -r .isDraft <<<"$pr") == true ]]; then reason="draft"
+            elif [[ $(jq -r .isCrossRepository <<<"$pr") == true ]]; then reason="PR desde fork"
+            elif has hold || has needs-human || has security:blocked || has review:changes-requested; then reason="label de bloqueo"
+            elif ! has review:approved; then reason="sin review:approved"
+            elif has security:required && ! has security:approved; then reason="falta security:approved"
+            elif [[ $(jq -r .mergeable <<<"$pr") != MERGEABLE ]]; then reason="no mergeable ($(jq -r .mergeable <<<"$pr"))"
+            else
+              for check in $REQUIRED_CHECKS; do
+                state=$(jq -r --arg c "$check" '[.statusCheckRollup[] | select(.name == $c)] | if length == 0 then "MISSING" else (map(.conclusion // "PENDING") | if all(. == "SUCCESS") then "SUCCESS" else (map(select(. != "SUCCESS")) | first) end) end' <<<"$pr")
+                if [[ "$state" != SUCCESS ]]; then reason="check $check: $state"; break; fi
+              done
+            fi
+
+            if [[ -n "$reason" ]]; then
+              echo "PR #$n: no se mergea — $reason"
+            else
+              echo "PR #$n: todos los gates OK → merge"
+              gh pr merge "$n" --squash --delete-branch
+            fi
+          done

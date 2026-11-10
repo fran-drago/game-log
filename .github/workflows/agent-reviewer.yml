@@ -1,0 +1,39 @@
+name: "Agent: Reviewer"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  schedule:
+    - cron: "45 */2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: agent-reviewer-${{ github.event.pull_request.number || 'sweep' }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
+  id-token: write
+
+jobs:
+  reviewer:
+    if: >-
+      vars.AGENTS_ENABLED == 'true' &&
+      (github.event_name != 'pull_request' ||
+       (!github.event.pull_request.draft && !github.event.pull_request.head.repo.fork))
+    uses: ./.github/workflows/_agent.yml
+    secrets: inherit
+    with:
+      role: reviewer
+      model: ${{ vars.MODEL_REVIEWER || 'claude-opus-5-5' }}
+      allowed_tools: "Bash(gh:*),Bash(git:*),Bash(npm:*),Bash(npx:*),Read,Glob,Grep"
+      disallowed_tools: "Edit,Write,Bash(git push:*),Bash(gh pr merge:*)"
+      setup_node: true
+      max_turns: 60
+      task: >-
+        ${{ github.event_name == 'pull_request'
+          && format('Revisá la PR #{0} según tu rol (hacé `gh pr checkout {0}` antes de correr los checks).', github.event.pull_request.number)
+          || 'Revisá las PRs abiertas que necesiten review (sin review:approved vigente ni review:changes-requested), máx. 3.' }}

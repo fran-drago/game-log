@@ -1,0 +1,20 @@
+name: PR labeler
+
+# pull_request_target: corre con la config de la rama base y NO hace checkout del código de la PR.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          # Token de agentes para que el label `security:required` dispare al agente Security.
+          repo-token: ${{ secrets.AGENT_GH_TOKEN || github.token }}
+          sync-labels: false
