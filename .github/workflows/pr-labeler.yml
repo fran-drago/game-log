@@ -13,7 +13,7 @@ jobs:
   label:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/labeler@v5
+      - uses: actions/labeler@v7
         with:
           # Token de agentes para que el label `security:required` dispare al agente Security.
           repo-token: ${{ secrets.AGENT_GH_TOKEN || github.token }}
